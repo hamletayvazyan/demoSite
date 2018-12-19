@@ -746,21 +746,67 @@
             }, 6000);
         }
 
+        var apiGeolocationSuccess = function(position) {
+            alert("API geolocation success!\n\nlat = " + position.coords.latitude + "\nlng = " + position.coords.longitude);
+
+        };
+
+        var tryAPIGeolocation = function() {
+            jQuery.post( "https://www.googleapis.com/geolocation/v1/geolocate?key=AIzaSyDCa1LUe1vOczX1hO_iGYgyo8p_jYuGOPU", function(success) {
+                apiGeolocationSuccess({coords: {latitude: success.location.lat, longitude: success.location.lng}});
+            })
+                .fail(function(err) {
+                    alert("API Geolocation error! \n\n"+err);
+                });
+        };
+
+        var browserGeolocationSuccess = function(position) {
+            let url = "http://ws.geonames.org/countryCodeJSON?lat="+position.coords.latitude+"&lng="+position.coords.longitude+"&username=hamlet.94";
+            let url1 = "http://ws.geonames.org/countryCodeJSON?lat=55.72&lng=37.57&username=hamlet.94";
+            $.ajax({
+                method: "GET",
+                url: url
+            }).done(function (response) {
+                if (response.countryName == 'Russia'){
+                    $('#countryCheck').text('России');
+                }
+                else{
+                    $('#countryCheck').text('Страны СНГ');
+                }
+            }).fail(function (err) {
+                console.log(err)
+            });
+          //  alert("Browser geolocation success!\n\nlat = " + position.coords.latitude + "\nlng = " + position.coords.longitude);
+        };
+
+        var browserGeolocationFail = function(error) {
+            switch (error.code) {
+                case error.TIMEOUT:
+                    alert("Browser geolocation error !\n\nTimeout.");
+                    break;
+                case error.PERMISSION_DENIED:
+                    if(error.message.indexOf("Only secure origins are allowed") == 0) {
+                        tryAPIGeolocation();
+                    }
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Browser geolocation error !\n\nPosition unavailable.");
+                    break;
+            }
+        };
+
+        var tryGeolocation = function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    browserGeolocationSuccess,
+                    browserGeolocationFail,
+                    {maximumAge: 50000, timeout: 20000, enableHighAccuracy: true});
+            }
+        };
+
+        tryGeolocation();
         // getting GEO country! if you have adBlock enabled this code will get an error
         // i get the names of countries only in English! for russian i should add a plugin maybe will do tomorrow
-        $.ajax({
-            method: "GET",
-            url: "http://ip-api.com/json"
-        }).done(function (response) {
-            if (response.country == 'Russia'){
-                $('#countryCheck').text('России');
-            }
-            else{
-                $('#countryCheck').text('Страны СНГ');
-            }
-        }).fail(function (err) {
-            console.log(err)
-        });
 
         // old code for conf show-hide
         $('.confident-link').click(function () {
